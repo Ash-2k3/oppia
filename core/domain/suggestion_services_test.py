@@ -7327,24 +7327,6 @@ class ContributorCertificateTests(test_utils.GenericTestBase):
         self.from_date = datetime.datetime.today() - datetime.timedelta(days=1)
         self.to_date = datetime.datetime.today() + datetime.timedelta(days=1)
 
-    def _get_change_with_normalized_string(self) -> Mapping[
-        str, change_domain.AcceptableChangeDictTypes]:
-        """Provides change_cmd dictionary with normalized translation html.
-
-        Returns:
-            Mapping[str, change_domain.AcceptableChangeDictTypes]. A dictionary
-            of the change_cmd object for the translations.
-        """
-        return {
-            'cmd': exp_domain.CMD_ADD_WRITTEN_TRANSLATION,
-            'content_id': 'content_0',
-            'language_code': 'hi',
-            'content_html': '<p>A content to translate.</p>',
-            'state_name': 'Introduction',
-            'translation_html': ['translated text1', 'translated text2'],
-            'data_format': 'set_of_normalized_string'
-        }
-
     def test_create_translation_contributor_certificate(self) -> None:
         score_category: str = ('%s%sEnglish' % (
             suggestion_models.SCORE_TYPE_TRANSLATION,
@@ -7356,7 +7338,7 @@ class ContributorCertificateTests(test_utils.GenericTestBase):
             'language_code': 'hi',
             'content_html': '',
             'state_name': 'Introduction',
-            'translation_html': '<p>Translation for content.</p>',
+            'translation_html': ['<p>Translation for content.</p>'],
         }
         suggestion_models.GeneralSuggestionModel.create(
             feconf.SUGGESTION_TYPE_TRANSLATE_CONTENT,
