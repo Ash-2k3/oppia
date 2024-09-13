@@ -190,6 +190,15 @@ export class ContributionOpportunitiesService {
     );
   }
 
+  async fetchUserDashboardVisitStatus(): Promise<boolean> {
+    const response = await this.contributionOpportunitiesBackendApiService.getUserDashboardVisitStatus();
+    return response.has_visited_contributor_dashboard; // Use the key returned by the backend
+  }
+
+  async updateUserDashboardVisitStatus(): Promise<void> {
+    await this.contributionOpportunitiesBackendApiService.recordUserDashboardVisit();
+  }
+
   get removeOpportunitiesEventEmitter(): EventEmitter<string[]> {
     return this._removeOpportunitiesEventEmitter;
   }

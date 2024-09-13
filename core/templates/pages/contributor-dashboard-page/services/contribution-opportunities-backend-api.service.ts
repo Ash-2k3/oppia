@@ -293,6 +293,14 @@ export class ContributionOpportunitiesBackendApiService {
       }
     });
   }
+
+  async getUserDashboardVisitStatus(): Promise<{ has_visited_contributor_dashboard: boolean }> {
+    return await this.http.get<{ has_visited_contributor_dashboard: boolean }>('/contributor-dashboard-visit').toPromise();
+  }
+
+  async recordUserDashboardVisit(): Promise<void> {
+    return await this.http.post<void>('/contributor-dashboard-visit', {}).toPromise();
+  }
 }
 
 angular

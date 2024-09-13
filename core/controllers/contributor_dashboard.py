@@ -292,6 +292,7 @@ class ContributorDashboardVisitHandler(base.BaseHandler):
     URL_PATH_ARGS_SCHEMAS = {}
     HANDLER_ARGS_SCHEMAS = {
         'GET': {},
+        'POST': {}
     }
 
     def get(self):
@@ -305,7 +306,9 @@ class ContributorDashboardVisitHandler(base.BaseHandler):
     def post(self):
         """Handles POST requests to update the visit flag for the contributor dashboard."""
         user_id = self.user_id
+        print('&&&&&& BEFORE ', user_services.get_user_settings(user_id).has_seen_contributor_dashboard_welcome_modal )
         user_services.record_user_visited_contributor_dashboard(user_id)
+        print('&&&&&& AFTER ', user_services.get_user_settings(user_id).has_seen_contributor_dashboard_welcome_modal )
         self.render_json({
             'status': 'success'
         })

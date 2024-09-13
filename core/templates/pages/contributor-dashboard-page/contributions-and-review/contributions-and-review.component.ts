@@ -53,6 +53,7 @@ import {
 import {HtmlEscaperService} from 'services/html-escaper.service';
 import {MatSnackBar} from '@angular/material/snack-bar';
 import {ExplorationOpportunitySummary} from 'domain/opportunity/exploration-opportunity-summary.model';
+import { WelcomeModalComponent } from '../modal-templates/welcome-modal.component';
 
 export interface Suggestion {
   change_cmd: {
@@ -142,6 +143,7 @@ export class ContributionsAndReview implements OnInit, OnDestroy {
   contributions: Record<string, SuggestionDetails> | object;
   userDetailsLoading: boolean;
   userIsLoggedIn: boolean;
+  userHasVisitedContributorDashboard: boolean;
   activeTabType: string;
   activeTabSubtype: string;
   dropdownShown: boolean;
@@ -720,6 +722,19 @@ export class ContributionsAndReview implements OnInit, OnDestroy {
         enabled: true,
       },
     ];
+    this.contributionOpportunitiesService.fetchUserDashboardVisitStatus().then(
+      (hasVisited: boolean) => {
+        console.log('The response received from the server is ', hasVisited);
+        this.userHasVisitedContributorDashboard = hasVisited;
+  
+        // Open the modal if the user has not visited the contributor dashboard before.
+        if (!this.userHasVisitedContributorDashboard) {
+          this.openWelcomeModal();
+        }
+      })
+      .catch((error: any) => {
+        console.error('An error occurred while fetching the visit status:', error);
+      });
 
     // Reset active exploration when changing topics.
     this.directiveSubscriptions.add(
@@ -855,6 +870,24 @@ export class ContributionsAndReview implements OnInit, OnDestroy {
         this.languageCode,
         explorationId
       );
+    });
+  }
+
+  openWelcomeModal(): void {
+    const modalRef = this.ngbModal.open(WelcomeModalComponent);
+  
+    modalRef.result.then(() => {
+      // Call the method to record the user visit when the modal is closed.
+      this.contributionOpportunitiesService.updateUserDashboardVisitStatus().then(
+        () => {
+          console.log('User visit status updated successfully.');
+        },
+        (error) => {
+          console.error('An error occurred while updating the user visit status:', error);
+        }
+      );
+    }).catch((error) => {
+      console.error('An error occurred while closing the modal:', error);
     });
   }
 

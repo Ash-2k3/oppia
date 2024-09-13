@@ -341,6 +341,7 @@ def get_users_settings(
                 banned=False,
                 username='admin',
                 has_viewed_lesson_info_modal_once=False,
+                has_seen_contributor_dashboard_welcome_modal=False,
                 last_agreed_to_terms=datetime.datetime.utcnow()
             ))
         else:
@@ -898,7 +899,9 @@ def _get_user_settings_from_model(
         deleted=user_settings_model.deleted,
         created_on=user_settings_model.created_on,
         has_viewed_lesson_info_modal_once=(
-            user_settings_model.has_viewed_lesson_info_modal_once)
+            user_settings_model.has_viewed_lesson_info_modal_once),
+        has_seen_contributor_dashboard_welcome_modal=(
+            user_settings_model.has_seen_contributor_dashboard_welcome_modal)
     )
 
 
@@ -998,7 +1001,7 @@ def create_new_user(auth_id: str, email: str) -> user_domain.UserSettings:
             user_settings.user_id, auth_id))
     user_id = user_models.UserSettingsModel.get_new_id('')
     user_settings = user_domain.UserSettings(
-        user_id, email, [feconf.ROLE_ID_FULL_USER], False, False,
+        user_id, email, [feconf.ROLE_ID_FULL_USER], False, False, False,
         preferred_language_codes=[constants.DEFAULT_LANGUAGE_CODE])
     _create_new_user_transactional(auth_id, user_settings)
     return user_settings
@@ -1062,7 +1065,7 @@ def create_new_profiles(
             raise Exception('User id cannot already exist for a new user.')
         user_id = user_models.UserSettingsModel.get_new_id()
         user_settings = user_domain.UserSettings(
-            user_id, email, [feconf.ROLE_ID_MOBILE_LEARNER], False, False,
+            user_id, email, [feconf.ROLE_ID_MOBILE_LEARNER], False, False, False,
             preferred_language_codes=[constants.DEFAULT_LANGUAGE_CODE],
             pin=modifiable_user_data.pin)
         user_settings.populate_from_modifiable_user_data(modifiable_user_data)
@@ -3076,12 +3079,11 @@ def check_user_is_coordinator(user_id: str, language_id: str) -> bool:
     return user_id in model.coordinator_ids
 
 def record_user_visited_contributor_dashboard(user_id):
-    """Updates has_seen_contributor_dashboard_welcome_modal to True      for the user with the given user id.
+    """Updates has_seen_contributor_dashboard_welcome_modal to True for the user with the given user id.
 
     Args:
         User_id: str. The unique Id of the user
     """
     user_settings = get_user_settings(user_id)
     user_settings.has_seen_contributor_dashboard_welcome_modal = True
-    print('User has visited the contributor dashboard, service layer', not user_settings.has_seen_contributor_dashboard_welcome_modal)
     save_user_settings(user_settings)

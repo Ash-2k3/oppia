@@ -111,6 +111,7 @@ class UserSettings:
         roles: List[str],
         banned: bool,
         has_viewed_lesson_info_modal_once: bool,
+        has_seen_contributor_dashboard_welcome_modal: bool,
         username: Optional[str] = None,
         last_agreed_to_terms: Optional[datetime.datetime] = None,
         last_started_state_editor_tutorial: (
@@ -122,7 +123,6 @@ class UserSettings:
             Optional[datetime.datetime]) = None,
         last_edited_an_exploration: (
             Optional[datetime.datetime]) = None,
-        has_seen_contributor_dashboard_welcome_modal: bool = False,
         default_dashboard: str = constants.DASHBOARD_TYPE_LEARNER,
         creator_dashboard_display_pref: str = (
             constants.ALLOWED_CREATOR_DASHBOARD_DISPLAY_PREFS['CARD']),
