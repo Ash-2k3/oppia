@@ -112,6 +112,9 @@ class UserSettingsModel(base_models.BaseModel):
     # When the user last created an exploration.
     last_created_an_exploration = (
         datastore_services.DateTimeProperty(default=None))
+    # Flag to check whether the user has visited the contributed dashboard once
+    has_seen_contributor_dashboard_welcome_modal = datastore_services.BooleanProperty(
+        default=False)
     # The preferred dashboard of the user.
     default_dashboard = datastore_services.StringProperty(
         default=constants.DASHBOARD_TYPE_LEARNER,

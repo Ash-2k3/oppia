@@ -909,6 +909,10 @@ URLS = [
         r'/getsubmittedsuggestions/<target_type>/<suggestion_type>',
         suggestion.UserSubmittedSuggestionsHandler),
     get_redirect_route(
+        r'/contributor-dashboard-visit',
+        contributor_dashboard.ContributorDashboardVisitHandler
+    ),
+    get_redirect_route(
         r'%s' % feconf.SUBSCRIBE_URL_PREFIX,
         subscriptions.SubscribeHandler),
     get_redirect_route(

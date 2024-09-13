@@ -3074,3 +3074,14 @@ def check_user_is_coordinator(user_id: str, language_id: str) -> bool:
         return False
 
     return user_id in model.coordinator_ids
+
+def record_user_visited_contributor_dashboard(user_id):
+    """Updates has_seen_contributor_dashboard_welcome_modal to True      for the user with the given user id.
+
+    Args:
+        User_id: str. The unique Id of the user
+    """
+    user_settings = get_user_settings(user_id)
+    user_settings.has_seen_contributor_dashboard_welcome_modal = True
+    print('User has visited the contributor dashboard, service layer', not user_settings.has_seen_contributor_dashboard_welcome_modal)
+    save_user_settings(user_settings)

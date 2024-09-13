@@ -45,6 +45,7 @@ class UserSettingsDict(TypedDict):
     last_logged_in: Optional[datetime.datetime]
     last_created_an_exploration: Optional[datetime.datetime]
     last_edited_an_exploration: Optional[datetime.datetime]
+    has_seen_contributor_dashboard_welcome_modal: bool
     default_dashboard: str
     creator_dashboard_display_pref: str
     user_bio: str
@@ -82,6 +83,8 @@ class UserSettings:
             last created an exploration.
         last_edited_an_exploration: datetime.datetime or None. When the user
             last edited an exploration.
+        has_seen_contributor_dashboard_welcoUme_modal: bool. Flag to check 
+            whether the user has visited the contributed dashboard once.
         default_dashboard: str. The default dashboard of the user.
         user_bio: str. User-specified biography.
         subject_interests: list(str) or None. Subject interests specified by
@@ -119,6 +122,7 @@ class UserSettings:
             Optional[datetime.datetime]) = None,
         last_edited_an_exploration: (
             Optional[datetime.datetime]) = None,
+        has_seen_contributor_dashboard_welcome_modal: bool = False,
         default_dashboard: str = constants.DASHBOARD_TYPE_LEARNER,
         creator_dashboard_display_pref: str = (
             constants.ALLOWED_CREATOR_DASHBOARD_DISPLAY_PREFS['CARD']),
@@ -157,6 +161,8 @@ class UserSettings:
                 user last created an exploration.
             last_edited_an_exploration: datetime.datetime or None. When the
                 user last edited an exploration.
+            has_seen_contributor_dashboard_welcome_modal: bool. Flag to check 
+                whether the user has visited the contributed dashboard once.
             default_dashboard: str. The default dashboard of the user.
             creator_dashboard_display_pref: str. The creator dashboard of the
                 user.
@@ -213,6 +219,8 @@ class UserSettings:
         self.created_on = created_on
         self.has_viewed_lesson_info_modal_once = (
             has_viewed_lesson_info_modal_once)
+        self.has_seen_contributor_dashboard_welcome_modal = (
+            has_seen_contributor_dashboard_welcome_modal)
 
     def validate(self) -> None:
         """Checks that the user_id, email, roles, banned, pin and display_alias
@@ -418,7 +426,9 @@ class UserSettings:
             'deleted': self.deleted,
             'created_on': self.created_on,
             'has_viewed_lesson_info_modal_once': (
-                self.has_viewed_lesson_info_modal_once)
+                self.has_viewed_lesson_info_modal_once),
+            'has_seen_contributor_dashboard_welcome_modal':
+                self.has_seen_contributor_dashboard_welcome_modal
         }
 
     @property

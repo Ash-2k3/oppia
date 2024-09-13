@@ -286,6 +286,31 @@ class ContributionOpportunitiesHandler(
         return opportunity_dicts, next_cursor, more
 
 
+class ContributorDashboardVisitHandler(base.BaseHandler):
+    """Handles the logic for checking and updating the visit flag for the contributor dashboard."""
+
+    URL_PATH_ARGS_SCHEMAS = {}
+    HANDLER_ARGS_SCHEMAS = {
+        'GET': {},
+    }
+
+    def get(self):
+        """Handles GET requests to check if the user has visited the contributor dashboard."""
+        user_id = self.user_id
+        user_settings = user_services.get_user_settings(user_id)
+        self.render_json({
+            'has_visited_contributor_dashboard': user_settings.has_seen_contributor_dashboard_welcome_modal
+        })
+
+    def post(self):
+        """Handles POST requests to update the visit flag for the contributor dashboard."""
+        user_id = self.user_id
+        user_services.record_user_visited_contributor_dashboard(user_id)
+        self.render_json({
+            'status': 'success'
+        })
+
+
 class ReviewableOpportunitiesHandlerNormalizedRequestDict(TypedDict):
     """Dict representation of ReviewableOpportunitiesHandler's
     normalized_request dictionary.
