@@ -50,8 +50,9 @@ import {
   HtmlLengthService,
 } from 'services/html-length.service';
 import {HtmlEscaperService} from 'services/html-escaper.service';
-import {MatSnackBar} from '@angular/material/snack-bar';
+import {MatSnackBar, MatSnackBarRef} from '@angular/material/snack-bar';
 import {ExplorationOpportunitySummary} from 'domain/opportunity/exploration-opportunity-summary.model';
+import {UndoSnackbarComponent} from 'components/custom-snackbar/undo-snackbar.component';
 
 export interface Suggestion {
   change_cmd: {
@@ -119,6 +120,8 @@ export interface CustomMatSnackBarRef {
   onAction: () => Observable<void>;
 }
 
+const COMMIT_TIMEOUT_DURATION = 30000;
+
 @Component({
   selector: 'oppia-contributions-and-review',
   templateUrl: './contributions-and-review.component.html',
@@ -153,11 +156,16 @@ export class ContributionsAndReview implements OnInit, OnDestroy {
   reviewableQuestionsSortKey: string;
   userCreatedTranslationsSortKey: string;
   reviewableTranslationsSortKey: string;
+  commitTimeout?: NodeJS.Timeout;
+  queuedSuggestionSummary = null;
+  queuedSuggestion = null;
+  currentSnackbarRef?: MatSnackBarRef<UndoSnackbarComponent>;
   tabNameToOpportunityFetchFunction: {
     [key: string]: {
       [key: string]: Function;
     };
   };
+  private isCommitting = false;
 
   opportunities: ExplorationOpportunitySummary[] = [];
 
@@ -400,13 +408,38 @@ export class ContributionsAndReview implements OnInit, OnDestroy {
     modalRef.componentInstance.reviewable = reviewable;
     modalRef.componentInstance.subheading = subheading;
 
+    modalRef.componentInstance.queuedSuggestionSummaryEmit.subscribe((queuedSuggestionSummary: string) => {
+      if (this.queuedSuggestionSummary){
+        // Queue any previously queued suggestion.
+        this.commitQueuedSuggestion();
+      }
+      this.queuedSuggestionSummary = queuedSuggestionSummary
+      this.startCommitTimeout()
+      this.showUndoSnackbar()
+    });
+
+    modalRef.componentInstance.queuedSuggestionEmit.subscribe((queuedSuggestion: string) => {
+      console.log('Received suggestion: ', queuedSuggestion);
+      this.queuedSuggestion = queuedSuggestion
+    });
+
     modalRef.result.then(
       resolvedSuggestionIds => {
-        this.contributionOpportunitiesService.removeOpportunitiesEventEmitter.emit(
-          resolvedSuggestionIds
+        const filteredResolvedSuggestionIds = resolvedSuggestionIds.filter(
+          suggestionId => this.queuedSuggestion?.suggestion.suggestion_id !== suggestionId
         );
-        resolvedSuggestionIds.forEach(suggestionId => {
+        // Emit only the filtered resolved suggestions
+        if (filteredResolvedSuggestionIds.length > 0) {
+          this.contributionOpportunitiesService.removeOpportunitiesEventEmitter.emit(
+            filteredResolvedSuggestionIds
+          );
+        }
+        resolvedSuggestionIds.forEach(suggestionId => {  
+          if (this.queuedSuggestion.suggestion.suggestion_id == suggestionId) {
+            console.log('Not removing the queued Suggestion yet.')
+          } else {
           delete this.contributions[suggestionId];
+          }
         });
       },
       () => {
@@ -415,6 +448,83 @@ export class ContributionsAndReview implements OnInit, OnDestroy {
         // No further action is needed.
       }
     );
+  }
+
+  startCommitTimeout(): void {
+    clearTimeout(this.commitTimeout); // Clear existing timeout.
+
+    // Start a new timeout for commit after timeframe.
+    this.commitTimeout = setTimeout(() => {
+      console.log('Timeout expired hence committing the suggestion')
+      this.commitQueuedSuggestion()
+    }, COMMIT_TIMEOUT_DURATION);
+  }
+
+  commitQueuedSuggestion(): void {
+    console.log('Queued Suggestion Summary Line 463 -- ', this.queuedSuggestionSummary)
+    if (!this.queuedSuggestionSummary || this.isCommitting) {
+      return;
+    }
+    this.isCommitting = true;
+    this.contributionAndReviewService.reviewExplorationSuggestion(
+      this.queuedSuggestionSummary.target_id,
+      this.queuedSuggestionSummary.suggestion_id,
+      this.queuedSuggestionSummary.action_status,
+      this.queuedSuggestionSummary.reviewer_message,
+      this.queuedSuggestionSummary.action_status === 'accept' &&
+        this.queuedSuggestionSummary.commit_message
+        ? this.queuedSuggestionSummary.commit_message
+        : null,
+      // Only include commit_message for accepted suggestions.
+      () => {
+        this.alertsService.clearMessages();
+        this.alertsService.addSuccessMessage(
+          `Suggestion ${
+            this.queuedSuggestionSummary?.action_status === 'accept'
+              ? 'accepted'
+              : 'rejected'
+          }.`
+        );
+        clearTimeout(this.commitTimeout);
+        this.contributionOpportunitiesService.removeOpportunitiesEventEmitter.emit([this.queuedSuggestionSummary.suggestion_id])
+        delete this.contributions[this.queuedSuggestionSummary.suggestion_id];
+        this.queuedSuggestionSummary = null
+        this.isCommitting = false;
+      },
+      errorMessage => {
+        this.alertsService.clearWarnings();
+        this.alertsService.addWarning(`Invalid Suggestion: ${errorMessage}`);
+        this.isCommitting = false;
+      }
+    );
+  }
+
+  showUndoSnackbar(): void {
+    this.currentSnackbarRef =
+      this.snackBar.openFromComponent<UndoSnackbarComponent>(
+        UndoSnackbarComponent,
+        {
+          duration: COMMIT_TIMEOUT_DURATION,
+          verticalPosition: 'bottom',
+          horizontalPosition: 'right',
+        }
+      );
+    this.currentSnackbarRef.instance.message = 'Suggestion queued';
+
+    this.currentSnackbarRef.onAction().subscribe(() => {
+      console.log('UNDOING, SETTING STUFF TO NULL')
+      this.undoReviewAction();
+    });
+
+    this.currentSnackbarRef.afterDismissed().subscribe(() => {
+      console.log('Committing while closing the snackbar')
+      this.commitQueuedSuggestion();
+    });
+  }
+
+  undoReviewAction(): void {
+    this.queuedSuggestionSummary = null
+    clearTimeout(this.commitTimeout); // Clear the commit timeout.
   }
 
   isActiveTab(tabType: string, subType: string): boolean {

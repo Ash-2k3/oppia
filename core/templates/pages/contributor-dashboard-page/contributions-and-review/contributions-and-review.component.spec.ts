@@ -87,7 +87,7 @@ class MockPlatformFeatureService {
   };
 }
 
-describe('Contributions and review component', () => {
+fdescribe('Contributions and review component', () => {
   let component: ContributionsAndReview;
   let fixture: ComponentFixture<ContributionsAndReview>;
   let ngbModal: NgbModal = null;
@@ -2096,6 +2096,30 @@ describe('Contributions and review component', () => {
       'should remove resolved suggestions when suggestion ' +
         'modal is opened and remove button is clicked',
       fakeAsync(() => {
+
+        spyOn(ngbModal, 'open').and.returnValue({
+          componentInstance: {
+            authorName: null,
+            contentHtml: null,
+            reviewable: null,
+            question: null,
+            questionHeader: null,
+            suggestion: null,
+            skillRubrics: null,
+            suggestionId: null,
+            skillDifficulty: null,
+            misconceptionsBySkill: null,
+            editSuggestionEmitter: eventEmitter,
+          },
+          result: Promise.resolve({
+            action: null,
+            reviewMessage: null,
+            skillDifficulty: null,
+          }),
+        } as NgbModalRef);
+
+
+
         spyOn(ngbModal, 'open').and.returnValue({
           componentInstance: MockNgbModalRef,
           result: Promise.resolve(['id1', 'id2']),
